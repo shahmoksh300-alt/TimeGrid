@@ -1,0 +1,366 @@
+﻿<!-- No Error -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TimeGrid</title>
+
+<script src="../../Documents/My%20Web%20Sites/idk3.dat"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link href="css.css" rel="stylesheet" type="text/css">
+
+<style>
+body { font-family: 'Inter', sans-serif; }
+.glass {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.done { background: rgba(34,197,94,0.6); }
+.notdone { background: rgba(239,68,68,0.6); }
+
+.status-btn {
+  padding: 2px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 10px;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+.status-btn.active.doneBtn { background: #22c55e; }
+.status-btn.active.notBtn { background: #ef4444; }
+
+.dragging { opacity: 0.5; transform: scale(0.95); }
+</style>
+</head>
+
+<body class="bg-gradient-to-br from-indigo-500 via-purple-500 to-indigo-700 min-h-screen text-white">
+
+<div class="max-w-6xl mx-auto p-6 space-y-6">
+
+<div class="glass p-6 rounded-3xl">
+<label>Timetable Name</label>
+<input id="ttName" class="w-full mt-2 p-3 rounded-xl bg-transparent border border-white/30">
+</div>
+
+<div class="glass p-6 rounded-3xl">
+<h2 class="text-xl mb-4">⚙️ Input-Box</h2>
+
+<div class="mb-4">
+<label>Select Days</label>
+<div id="daySelector" class="flex gap-3 flex-wrap mt-2">
+<label><input type="checkbox" value="Mon" checked> Mon</label>
+<label><input type="checkbox" value="Tue" checked> Tue</label>
+<label><input type="checkbox" value="Wed" checked> Wed</label>
+<label><input type="checkbox" value="Thu" checked> Thu</label>
+<label><input type="checkbox" value="Fri" checked> Fri</label>
+<label><input type="checkbox" value="Sat"> Sat</label>
+<label><input type="checkbox" value="Sun"> Sun</label>
+</div>
+</div>
+
+<div class="grid grid-cols-2 gap-4">
+<input id="startTime" type="time" value="09:00" class="p-2 rounded bg-white/10">
+<input id="endTime" type="time" value="15:00" class="p-2 rounded bg-white/10">
+<input id="slotDuration" type="number" value="60" class="p-2 rounded bg-white/10">
+<input id="breakDuration" type="number" value="15" class="p-2 rounded bg-white/10">
+</div>
+
+<div class="mt-3 bg-white/10 p-3 rounded">
+Slots: <span id="slotDisplay">0</span>
+</div>
+</div>
+
+<div class="glass p-6 rounded-3xl">
+<h2 class="text-xl mb-3">📚 Subjects Input</h2>
+<div id="subjects"></div>
+<button onclick="addSubject()" class="bg-white text-black px-4 py-2 rounded mt-3">Add</button>
+</div>
+
+<!-- ✅ ADDED SAVE BUTTON -->
+<div class="flex gap-4">
+<button onclick="generateTimetable()" class="bg-white text-black px-6 py-3 rounded">Generate</button>
+<button onclick="showAnalytics()" class="border px-6 py-3 rounded">Analytics</button>
+<button onclick="saveAll()" class="bg-green-400 text-black px-6 py-3 rounded">Save</button>
+</div>
+
+<div id="timetable" class="grid gap-2 text-center"></div>
+<div id="analytics" class="hidden space-y-4"></div>
+
+</div>
+
+<script>
+
+let dragged=null;
+
+function attachStatusEvents(c){
+  if(c.dataset.subject === "Free") return;
+
+  let doneBtn=c.querySelector(".doneBtn");
+  let notBtn=c.querySelector(".notBtn");
+
+  if(!doneBtn || !notBtn) return;
+
+  doneBtn.onclick=()=>{
+    c.dataset.status="done";
+    c.classList.add("done");
+    c.classList.remove("notdone");
+    doneBtn.classList.add("active");
+    notBtn.classList.remove("active");
+    saveProgress();
+  };
+
+  notBtn.onclick=()=>{
+    c.dataset.status="not";
+    c.classList.add("notdone");
+    c.classList.remove("done");
+    notBtn.classList.add("active");
+    doneBtn.classList.remove("active");
+    saveProgress();
+  };
+}
+
+function addSubject(){
+  let d=document.createElement('div');
+  d.className="flex gap-2 mb-2";
+  d.innerHTML=`<input placeholder="Subject" class="flex-1 p-2 bg-white/10 rounded">
+               <input type="number" placeholder="hrs" class="w-20 p-2 bg-white/10 rounded">`;
+  subjects.appendChild(d);
+}
+
+function updateSlots(){
+  let s=startTime.value.split(':');
+  let e=endTime.value.split(':');
+
+  let start=s[0]*60+ +s[1];
+  let end=e[0]*60+ +e[1];
+
+  let dur=+slotDuration.value;
+  let br=+breakDuration.value;
+
+  let count=0;
+  while(start+dur<=end){
+    count++;
+    start+=dur+br;
+  }
+  slotDisplay.innerText=count;
+}
+
+function generateTimetable(){
+  updateSlots();
+  timetable.innerHTML="";
+
+  const selectedDays=[...document.querySelectorAll('#daySelector input:checked')].map(d=>d.value);
+  if(selectedDays.length===0) return alert("Select at least 1 day");
+
+  let days=["Time",...selectedDays];
+  timetable.style.gridTemplateColumns=`repeat(${days.length},1fr)`;
+
+  days.forEach(d=>{
+    let h=document.createElement('div');
+    h.textContent=d;
+    h.className="font-semibold";
+    timetable.appendChild(h);
+  });
+
+  let s=startTime.value.split(':');
+  let e=endTime.value.split(':');
+
+  let start=s[0]*60+ +s[1];
+  let end=e[0]*60+ +e[1];
+
+  let dur=+slotDuration.value;
+  let br=+breakDuration.value;
+
+  let times=[];
+  while(start+dur<=end){
+    let h=Math.floor(start/60),m=start%60;
+    let eh=Math.floor((start+dur)/60),em=(start+dur)%60;
+
+    times.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} - ${String(eh).padStart(2,'0')}:${String(em).padStart(2,'0')}`);
+    start+=dur+br;
+  }
+
+  let subs=[];
+  let invalid=false;
+
+  document.querySelectorAll("#subjects div").forEach(r=>{
+    let n=r.children[0].value.trim();
+    let h=parseInt(r.children[1].value);
+
+    if(!h || h<=0){
+      alert(`⚠️ Invalid hours for "${n || "Subject"}". Enter a number greater than 0.`);
+      invalid=true;
+      return;
+    }
+
+    for(let i=0;i<h;i++) subs.push(n);
+  });
+
+  if(invalid) return;
+
+  let totalSlots = times.length * selectedDays.length;
+  let totalHours = subs.length;
+
+  if(totalHours > totalSlots){
+    alert(`⚠️ You entered ${totalHours} hours but only ${totalSlots} slots available!`);
+    return;
+  }
+
+  subs.sort(()=>Math.random()-0.5);
+
+  let idx=0;
+
+  times.forEach((t)=>{
+    let timeCell=document.createElement('div');
+    timeCell.textContent=t;
+    timetable.appendChild(timeCell);
+
+    for(let j=0;j<selectedDays.length;j++){
+
+      let c=document.createElement('div');
+      c.className="p-2 rounded bg-white/10";
+
+      let subject=subs[idx]||"Free";
+      idx++;
+
+      c.dataset.subject = subject;
+      c.dataset.status = "none";
+
+      c.innerHTML=`
+        <div class="mb-1 font-medium">${subject}</div>
+        ${subject !== "Free" ? `
+        <div class="flex justify-center gap-2">
+          <span class="status-btn doneBtn">Done</span>
+          <span class="status-btn notBtn">Not</span>
+        </div>` : ""}
+      `;
+
+      attachStatusEvents(c);
+
+      c.draggable=true;
+
+      c.ondragstart=e=>{
+        dragged=c;
+        c.classList.add("dragging");
+      };
+
+      c.ondragend=e=>{
+        c.classList.remove("dragging");
+      };
+
+      c.ondragover=e=>e.preventDefault();
+
+      c.ondrop=e=>{
+        e.preventDefault();
+        if(!dragged||dragged===c) return;
+
+        let tempHTML=c.innerHTML;
+        let tempSub=c.dataset.subject;
+        let tempStatus=c.dataset.status;
+
+        c.innerHTML=dragged.innerHTML;
+        c.dataset.subject=dragged.dataset.subject;
+        c.dataset.status=dragged.dataset.status;
+
+        dragged.innerHTML=tempHTML;
+        dragged.dataset.subject=tempSub;
+        dragged.dataset.status=tempStatus;
+
+        attachStatusEvents(c);
+        attachStatusEvents(dragged);
+      };
+
+      timetable.appendChild(c);
+    }
+  });
+}
+
+/* ✅ SAVE ALL FEATURE */
+function saveAll(){
+  let data={
+    name: ttName.value,
+    start:startTime.value,
+    end:endTime.value,
+    slot:slotDuration.value,
+    break:breakDuration.value,
+    subjects: subjects.innerHTML,
+    table: timetable.innerHTML
+  };
+  localStorage.setItem("fullTimetable", JSON.stringify(data));
+  alert("✅ Saved successfully!");
+}
+
+/* ✅ LOAD ON START */
+window.onload=()=>{
+  let data=JSON.parse(localStorage.getItem("fullTimetable"));
+  if(!data) return;
+
+  ttName.value=data.name;
+  startTime.value=data.start;
+  endTime.value=data.end;
+  slotDuration.value=data.slot;
+  breakDuration.value=data.break;
+  subjects.innerHTML=data.subjects;
+  timetable.innerHTML=data.table;
+};
+
+function saveProgress(){
+  let data=[];
+  document.querySelectorAll("#timetable div").forEach(c=>{
+    if(c.dataset && c.dataset.subject && c.dataset.subject !== "Free"){
+      data.push(c.dataset.status);
+    }
+  });
+  localStorage.setItem("progress",JSON.stringify(data));
+}
+
+function showAnalytics(){
+  analytics.classList.remove("hidden");
+
+  let data=JSON.parse(localStorage.getItem("progress"))||[];
+
+  let done=data.filter(x=>x==="done").length;
+  let total=data.length;
+  let pending=total-done;
+
+  let percent= total? Math.round(done/total*100):0;
+
+  analytics.innerHTML=`
+  <div class="glass p-6 rounded-3xl">
+    <h2 class="text-xl">📊 Analytics Dashboard</h2>
+    <p>${ttName.value}</p>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div class="glass p-4 rounded">
+      <p>Completion</p>
+      <h1 class="text-3xl">${percent}%</h1>
+    </div>
+
+    <div class="glass p-4 rounded">
+      <p>Done</p>
+      <h1 class="text-3xl">${done}</h1>
+    </div>
+
+    <div class="glass p-4 rounded">
+      <p>Pending</p>
+      <h1 class="text-3xl">${pending}</h1>
+    </div>
+
+    <div class="glass p-4 rounded">
+      <p>Total</p>
+      <h1 class="text-3xl">${total}</h1>
+    </div>
+  </div>
+  `;
+}
+
+addSubject();
+updateSlots();
+
+</script>
+
+</body>
+</html>

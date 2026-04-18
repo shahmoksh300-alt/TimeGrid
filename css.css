@@ -1,0 +1,176 @@
+﻿/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Body */
+body {
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #4f46e5, #9333ea, #4338ca);
+  min-height: 100vh;
+  color: #ffffff;
+}
+
+/* Layout */
+.max-w-6xl {
+  max-width: 1100px;
+  margin: auto;
+}
+
+.p-6 { padding: 24px; }
+.mt-2 { margin-top: 8px; }
+.mt-3 { margin-top: 12px; }
+.mb-2 { margin-bottom: 8px; }
+.mb-3 { margin-bottom: 12px; }
+.mb-4 { margin-bottom: 16px; }
+
+.space-y-6 > * + * {
+  margin-top: 24px;
+}
+
+.flex { display: flex; }
+.flex-wrap { flex-wrap: wrap; }
+.grid { display: grid; }
+.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.gap-4 { gap: 16px; }
+
+/* Glass Card */
+.glass {
+  background: rgba(255, 255, 255, 0.15); /* more visible */
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  color: #ffffff;
+}
+
+/* Text */
+label, p, span, div {
+  color: #ffffff;
+}
+
+/* Inputs */
+input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.4);
+  background: rgba(0,0,0,0.3); /* darker for contrast */
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+}
+
+input::placeholder {
+  color: rgba(255,255,255,0.7);
+}
+
+input:focus {
+  border-color: #ffffff;
+  background: rgba(0,0,0,0.5);
+}
+
+/* Buttons */
+button {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+/* Button Styles */
+.bg-white {
+  background: #ffffff;
+  color: #000000;
+}
+
+.bg-green-400 {
+  background: #4ade80;
+  color: #000000;
+}
+
+.border {
+  border: 1px solid #ffffff;
+  background: transparent;
+  color: #ffffff;
+}
+
+/* Timetable Cells */
+#timetable div {
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.35); /* darker = readable */
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #ffffff;
+  font-size: 14px;
+}
+
+#timetable div:hover {
+  background: rgba(0,0,0,0.5);
+}
+
+/* Status Colors */
+.done {
+  background: rgba(34,197,94,0.8) !important;
+}
+
+.notdone {
+  background: rgba(239,68,68,0.8) !important;
+}
+
+/* Status Buttons */
+.status-btn {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.4);
+  background: rgba(0,0,0,0.4);
+  color: #ffffff;
+}
+
+.status-btn.active.doneBtn {
+  background: #22c55e;
+  color: #000;
+}
+
+.status-btn.active.notBtn {
+  background: #ef4444;
+  color: #000;
+}
+
+/* Drag */
+.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+/* Analytics */
+#analytics .glass {
+  text-align: center;
+}
+
+.text-3xl {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+/* Utility */
+.hidden { display: none; }
+.text-center { text-align: center; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.rounded { border-radius: 10px; }
+.rounded-3xl { border-radius: 24px; }
+
